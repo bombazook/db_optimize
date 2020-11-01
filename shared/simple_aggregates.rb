@@ -1,7 +1,7 @@
 RSpec.shared_examples 'simple aggregates' do |raw_connection, copy_connection|
   let(:connection){ send(raw_connection) }
   let(:optimized_connection){ send(copy_connection) }
-  let(:first_user_id) { connection.exec('SELECT * FROM likes LIMIT 1').getvalue(0, 1) }
+  let(:first_user_id) { connection.exec('SELECT * FROM likes LIMIT 1').getvalue(0, 0) }
   let(:query_1) { "SELECT COUNT(*) FROM likes WHERE user_id = #{first_user_id}" }
   let(:optimized_query) { query_1 }
   let(:performance_gain_times) { 100 }

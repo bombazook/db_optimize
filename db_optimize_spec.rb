@@ -61,7 +61,7 @@ RSpec.describe 'sql select speedup' do
         copy.raw_exec %(
           LOCK TABLE likes IN SHARE ROW EXCLUSIVE MODE;
           create TRIGGER countrows AFTER INSERT OR DELETE on likes FOR EACH ROW EXECUTE PROCEDURE count_#{field_name}_rows();
-          DELETE FROM rowcount WHERE table_name = 'likes';
+          DELETE FROM rowcount WHERE table_name = 'likes' AND field_name = '#{field_name}';
           INSERT INTO rowcount (table_name, field_name, field_value, total_rows)
           SELECT
             'likes' as table_name,
@@ -77,6 +77,26 @@ RSpec.describe 'sql select speedup' do
       let(:optimized_query){  "SELECT total_rows FROM rowcount WHERE table_name = 'likes' AND field_name = 'user_id' AND field_value = #{first_user_id}::text" }
       let(:performance_gain_times) { 200 }
     end
+  end
 
+  context 'adding multiple field index' do
+    include_context "db copy"
+    let(:first_row){ raw.exec("SELECT * FROM likes LIMIT 1") }
+    let(:user_id){  first_row.getvalue(0,0) }
+    let(:post_id){ first_row.getvalue(0,1) }
+
+    let(:query){ "SELECT * FROM likes WHERE user_id = #{user_id} AND post_id = #{post_id}"}
+
+    before :all do
+      copy.exec 'CREATE INDEX user_id_post_id_index ON likes (user_id, post_id)'
+    end
+
+    it "speedups multiple select fields" do
+      expect do
+        copy.exec(query)
+      end.to (perform_faster_than do
+        raw.exec(query)
+      end).at_least(100).times
+    end
   end
 end
