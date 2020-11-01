@@ -1,5 +1,6 @@
 require 'bundler/inline'
 require 'delegate'
+require 'forwardable'
 
 gemfile do
   source 'https://rubygems.org'
@@ -16,9 +17,12 @@ RSpec.configure do |c|
 end
 
 class DbCover < SimpleDelegator
+  extend Forwardable
   def initialize *args
     super(PG.connect(*args))
   end
+
+  def_delegator :__getobj__, :exec, :raw_exec
 
   def exec *args
     super('DISCARD ALL')
