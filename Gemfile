@@ -1,0 +1,7 @@
+source 'https://rubygems.org'
+gem 'byebug'
+gem 'rspec'
+gem 'pg'
+gem 'rspec-benchmark'
+gem 'awesome_print'
+gem 'dry-initializer'

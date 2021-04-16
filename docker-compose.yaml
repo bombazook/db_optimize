@@ -1,0 +1,29 @@
+networks:
+  default:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet:  172.25.0.0/16
+services:
+  db:
+    image: postgres:13.1
+    volumes:
+      - ./tmp/db:/var/lib/postgresql/data
+      - ./dockerfiles/db/init.sh:/docker-entrypoint-initdb.d/init.sh
+    environment:
+      POSTGRES_PASSWORD: postgres_password
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      PGUSER: postgres
+      PGPASSWORD: postgres_password
+      DB_HOST: db
+      FORCE_REBUILD: ${FORCE_REBUILD:-false}
+      ROW_COUNTS: ${ROW_COUNTS:-1000000}
+    depends_on:
+      - db
+    volumes:
+      - .:/usr/src/app
